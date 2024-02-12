@@ -54,7 +54,7 @@ P = 10000
 MCS = 200000
 nSteps = 600
 dt = 0.01
-temp = 20
+temp = 2
 Ts = np.linspace(2.50,2.95,10)
 Dkls = np.array([])
 os.system(f"mkdir data_N{N}_T_{temp:.3f}_P{P}")
