@@ -50,13 +50,13 @@ def Dkl(x0,x_recon):
     c2,tmp = np.histogram(np.mean(x_recon,axis = 1),bins = 21,range=(-1.25,1.25),density = True)
     return np.sum(c1*np.log((c1+eps)/(c2+eps)))
 
-L = 12
+L = 14
 N = L**2
 P = 50000
 MCS = 200000
 nSteps = 300
 dt = 0.02
-temp = 2
+temp = 10
 Ts = np.linspace(2.27,3.22,20)
 Dkls = np.array([])
 os.system(f"mkdir data_N{N}_T{temp:.3f}_P{P}")
