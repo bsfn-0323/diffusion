@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import os
+
 def load_data(L,temp,MCS):
     return np.fromfile(f"../ising_wolff/dataIsing2D_L{L}/config_L{L}_T{temp:.3f}.bin",dtype = np.int32).reshape(MCS,L**2)
 
@@ -18,6 +19,7 @@ def gaussScore(x0,temp,nSteps,dt,device = "cpu"):
         W[i] = torch.linalg.inv(temp*(1-exp_tsq)*torch.eye(N) + exp_tsq*cov)
         #b[i] = -exp_t* torch.mm(W[i],m0)
     return W
+
 def backward(xT,W,temp,nSteps,dt,full_traj = False,device = "cpu"):
     P = xT.shape[0]
     N = xT.shape[1]
@@ -50,26 +52,27 @@ def Dkl(x0,x_recon):
 
 L = 10
 N = L**2
-P = 10000
+P = 100000
 MCS = 200000
-nSteps = 600
-dt = 0.01
-temp = 2
-Ts = np.linspace(2.50,2.95,10)
+nSteps = 300
+dt = 0.02
+temp = 20
+Ts = np.linspace(2.70,2.890,20)
 Dkls = np.array([])
-os.system(f"mkdir data_N{N}_T_{temp:.3f}_P{P}")
+os.system(f"mkdir data_N{N}_T{temp:.3f}_P{P}")
 for i,T in enumerate(Ts):
     x0 = load_data(L,T,MCS)
-    W = gaussScore(x0[:P],temp,600,0.01)
+    W = gaussScore(x0[:P],temp,nSteps,dt)
     xT = np.sqrt(temp)*torch.randn((P,N))
-    x_recon = backward(xT,W,temp,600,0.01,True).numpy()
-    #np.save(f"score_N{N}_T_{temp:.3f}_P{P}/recon_L{L}_P{P}_T{T:.3f}_nSteps{nSteps}_dt{dt:.2f}",x_recon)
+    x_recon = backward(xT,W,temp,nSteps,dt,True).numpy()
+    np.save(f"data_N{N}_T{temp:.3f}_P{P}/recon_temp{T:.3f}_nSteps{nSteps}_dt{dt:.2f}",x_recon)
     Dkls = np.append(Dkls,Dkl(x0,x_recon[:,0,:]))
     del x_recon
+    #print(f"-----Done {i}-----")
 
 plt.figure(figsize = (8,6))
 plt.title(r"$D_{KL}(T)$")
 plt.plot(Ts,Dkls)
 plt.xlabel(r"$T$")
 plt.ylabel(r"$D_{KL}$")
-plt.savefig(f"data_N{N}_T_{temp:.3f}_P{P}/dkls.pdf")
+plt.savefig(f"data_N{N}_T{temp:.3f}_P{P}/dkls.pdf")
