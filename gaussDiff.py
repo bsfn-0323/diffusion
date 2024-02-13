@@ -50,14 +50,14 @@ def Dkl(x0,x_recon):
     c2,tmp = np.histogram(np.mean(x_recon,axis = 1),bins = 21,range=(-1.25,1.25),density = True)
     return np.sum(c1*np.log((c1+eps)/(c2+eps)))
 
-L = 10
+L = 12
 N = L**2
-P = 100000
+P = 50000
 MCS = 200000
 nSteps = 300
 dt = 0.02
-temp = 20
-Ts = np.linspace(2.70,2.890,20)
+temp = 2
+Ts = np.linspace(2.27,3.22,20)
 Dkls = np.array([])
 os.system(f"mkdir data_N{N}_T{temp:.3f}_P{P}")
 for i,T in enumerate(Ts):
@@ -65,7 +65,7 @@ for i,T in enumerate(Ts):
     W = gaussScore(x0[:P],temp,nSteps,dt)
     xT = np.sqrt(temp)*torch.randn((P,N))
     x_recon = backward(xT,W,temp,nSteps,dt,True).numpy()
-    np.save(f"data_N{N}_T{temp:.3f}_P{P}/recon_temp{T:.3f}_nSteps{nSteps}_dt{dt:.2f}",x_recon)
+    np.save(f"data_N{N}_T{temp:.3f}_P{P}/recon_temp{T:.3f}_nSteps{nSteps}_dt{dt:.2f}",x_recon[:,0,:])
     Dkls = np.append(Dkls,Dkl(x0,x_recon[:,0,:]))
     del x_recon
     #print(f"-----Done {i}-----")
@@ -76,3 +76,4 @@ plt.plot(Ts,Dkls)
 plt.xlabel(r"$T$")
 plt.ylabel(r"$D_{KL}$")
 plt.savefig(f"data_N{N}_T{temp:.3f}_P{P}/dkls.pdf")
+np.save(f"data_N{N}_T{temp:.3f}_P{P}/dkls",Dkls)
