@@ -1,3 +1,4 @@
 []  Linear score: check x_recon G(r) in function of reconstruction time in both np.sign and not.
 []  Use the x^2-1 constraint to get binary variables.
 [x]  Determine the exact score using the x**2 -1 constraint
+[x]  Implement the exact score with the x**2-1 constraint
