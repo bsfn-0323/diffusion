@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+import os
 def load_data(L,temp,MCS):
     return np.fromfile(f"../ising_wolff/dataIsing2D_L{L}/config_L{L}_T{temp:.3f}.bin",dtype = np.int32).reshape(MCS,L**2)
 
@@ -53,19 +53,19 @@ def backward(xT,A,g,temp,nSteps,dt,full_traj = False,every = 5,device = "cuda"):
         x_recon = xT.to(device)
     with torch.no_grad():
         for tt in tts[::-1]:
-            std = np.sqrt(2*temp*dt)*torch.randn_like(xT).to(device)
+            std = np.sqrt(2*temp[tt-1]*dt)*torch.randn_like(xT).to(device)
             #if tt==1:
             #    std = torch.zeros(xT.shape)
 
             for n in range(nbatches):
                 if(full_traj):
                     score = myscore(x_now[n*batch_size:(n+1)*batch_size,:], A[tt-1],g[tt-1],device)
-                    x_now[n*batch_size:(n+1)*batch_size,:] = x_now[n*batch_size:(n+1)*batch_size,:]*(1+dt) + 2*temp*score*dt + std[n*batch_size:(n+1)*batch_size]
+                    x_now[n*batch_size:(n+1)*batch_size,:] = x_now[n*batch_size:(n+1)*batch_size,:]*(1+dt) + 2*temp[tt-1]*score*dt + std[n*batch_size:(n+1)*batch_size]
                     if(tt in tslice):
                         x_recon[n*batch_size:(n+1)*batch_size,np.where(tslice==tt)[0][0],:]=x_now[n*batch_size:(n+1)*batch_size,:]
                 else:
                     score = myscore(x_recon[n*batch_size:(n+1)*batch_size], A[tt-1],g[tt-1],device)
-                    x_recon[n*batch_size:(n+1)*batch_size] = x_recon[n*batch_size:(n+1)*batch_size]*(1+dt)+ 2*temp*score*dt + std[n*batch_size:(n+1)*batch_size]
+                    x_recon[n*batch_size:(n+1)*batch_size] = x_recon[n*batch_size:(n+1)*batch_size]*(1+dt)+ 2*temp[tt-1]*score*dt + std[n*batch_size:(n+1)*batch_size]
                 del score
     
     return x_recon.to("cpu").numpy()
@@ -78,19 +78,20 @@ Tmax = 3.22
 meas = 20
 Ts = np.linspace(Tmin,Tmax,meas)
 
-L = 8
+L = 14
 N = L**2
 P = 100000
-diffTemp = 2
 nSteps = 300
+diffTemp = np.geomspace(1e-03,2,nSteps)
 dt = 0.02
-x_recon = np.empty((meas,P,N))
+#x_recon = np.empty((meas,P,N))
+os.system(f"mkdir x_recon_L{L}_annealed")
 for i,temp in enumerate(Ts):
     idx = np.random.choice(range(200000),P,replace = False)
     data = load_data(L,temp,200000)
 
     A,g = getScoreParams(data,diffTemp,dt,nSteps)
 
-    xT = np.sqrt(diffTemp)*torch.randn((P,N))
-    x_recon[i] = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cpu")
-np.save(f"x_recon_L{L}/x_recon_L{L}_Tmin{Tmin}_Tmax{Tmax}_difftemp{diffTemp}",x_recon)
+    xT = np.sqrt(diffTemp[-1])*torch.randn((P,N))
+    x_recon = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cpu")
+    np.save(f"x_recon_L{L}_annealed/x_recon_L{L}_T{temp:.3f}_difftemp{diffTemp[0]:.3f}_{diffTemp[-1]:.3f}",x_recon)

@@ -2,4 +2,6 @@
 []  Use the x^2-1 constraint to get binary variables.
 [x]  Determine the exact score using the x**2 -1 constraint
 [x]  Implement the exact score with the x**2-1 constraint
-[] check x_recon G(r) using the constrained score
+[] Check that the x_recon data behave critically
+[] Check x_recon G(r) using the constrained score
+[] Instead of using a constant diffusing temperature use a T(t) that goes to 0 tor t->0
