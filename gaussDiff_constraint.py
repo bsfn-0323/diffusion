@@ -84,7 +84,7 @@ P = 100000
 diffTemp = 2
 nSteps = 300
 dt = 0.02
-x_recon = np.array((meas,P,N))
+x_recon = np.empty((meas,P,N))
 for i,temp in enumerate(Ts):
     idx = np.random.choice(range(200000),P,replace = False)
     data = load_data(L,temp,200000)
@@ -93,4 +93,4 @@ for i,temp in enumerate(Ts):
 
     xT = np.sqrt(diffTemp)*torch.randn((P,N))
     x_recon[i] = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cpu")
-np.save(f"x_recon_L{L}_Tmin{Tmin}_Tmax{Tmax}_difftemp{diffTemp}",x_recon)
+np.save(f"x_recon_L{L}/x_recon_L{L}_Tmin{Tmin}_Tmax{Tmax}_difftemp{diffTemp}",x_recon)
