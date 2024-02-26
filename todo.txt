@@ -5,3 +5,4 @@
 [x] Check that the x_recon data behave critically
 [x] Check x_recon G(r) using the constrained score
 [x] Instead of using a constant diffusing temperature use a T(t) that goes to 0 tor t->0
+[]  Why P(m) is sensible to the diffusion temperature in the linear score?

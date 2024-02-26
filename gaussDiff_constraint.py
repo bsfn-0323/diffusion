@@ -73,19 +73,19 @@ def backward(xT,A,g,temp,nSteps,dt,full_traj = False,every = 5,device = "cuda"):
 def myscore(x,A,g,device = "cuda"):
     return  -torch.matmul(x,A.T) + g*x*(x**2-1)
 
-Tmin = 2.27
-Tmax = 3.22
-meas = 20
+Tmin = 4.5
+Tmax = 4.9
+meas = 5
 Ts = np.linspace(Tmin,Tmax,meas)
 
-L = 14
+L = 8
 N = L**2
 P = 100000
 nSteps = 300
-diffTemp = np.geomspace(1e-03,2,nSteps)
+diffTemp = np.linspace(2,2,nSteps)
 dt = 0.02
 #x_recon = np.empty((meas,P,N))
-os.system(f"mkdir x_recon_L{L}_annealed")
+os.system(f"mkdir x_recon_L{L}")
 for i,temp in enumerate(Ts):
     idx = np.random.choice(range(200000),P,replace = False)
     data = load_data(L,temp,200000)
@@ -93,5 +93,5 @@ for i,temp in enumerate(Ts):
     A,g = getScoreParams(data,diffTemp,dt,nSteps)
 
     xT = np.sqrt(diffTemp[-1])*torch.randn((P,N))
-    x_recon = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cpu")
-    np.save(f"x_recon_L{L}_annealed/x_recon_L{L}_T{temp:.3f}_difftemp{diffTemp[0]:.3f}_{diffTemp[-1]:.3f}",x_recon)
+    x_recon = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cuda")
+    np.save(f"x_recon_L{L}/x_recon_L{L}_T{temp:.3f}_difftemp{diffTemp[-1]:.3f}",x_recon)
