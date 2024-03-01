@@ -36,7 +36,7 @@ def getScoreParams(x0,diffTemp,dt,nSteps):
 
     return A,g
 
-def backward(xT,A,g,temp,nSteps,dt,full_traj = False,every = 5,device = "cuda"):
+def backward(xT,A,g,temp,nSteps,dt,full_traj = False,nslices = 10,device = "cuda"):
     P = xT.shape[0]
     N = xT.shape[1]
     A =torch.from_numpy(A).to(device).to(torch.float32)
@@ -45,9 +45,8 @@ def backward(xT,A,g,temp,nSteps,dt,full_traj = False,every = 5,device = "cuda"):
     batch_size = int(P/nbatches)
     tts = np.linspace(1,nSteps,nSteps-1,dtype = np.int32)
     if(full_traj):
-        redSteps = int(nSteps/every)
-        tslice = np.linspace(1,nSteps+1,redSteps,dtype = np.int32)
-        x_recon = torch.Tensor(P,redSteps,N).to(device)
+        tslice = np.geomspace(1,nSteps,nslices,dtype = np.int32)
+        x_recon = torch.Tensor(P,nslices,N).to(device)
         x_now =xT.to(device)
     else:
         x_recon = xT.to(device)
@@ -73,25 +72,25 @@ def backward(xT,A,g,temp,nSteps,dt,full_traj = False,every = 5,device = "cuda"):
 def myscore(x,A,g,device = "cuda"):
     return  -torch.matmul(x,A.T) + g*x*(x**2-1)
 
-Tmin = 4.5
-Tmax = 4.9
-meas = 5
+Tmin = 2.27
+Tmax = 3.22
+meas = 20
 Ts = np.linspace(Tmin,Tmax,meas)
 
-L = 8
+L = 14
 N = L**2
 P = 100000
 nSteps = 300
-diffTemp = np.linspace(2,2,nSteps)
+diffTemp = np.linspace(0.1,0.1,nSteps)
 dt = 0.02
 #x_recon = np.empty((meas,P,N))
-os.system(f"mkdir x_recon_L{L}")
-for i,temp in enumerate(Ts):
+os.system(f"mkdir x_recon_L{L}_traj")
+for i,temp in enumerate(Ts[1::2]):
     idx = np.random.choice(range(200000),P,replace = False)
     data = load_data(L,temp,200000)
 
     A,g = getScoreParams(data,diffTemp,dt,nSteps)
 
     xT = np.sqrt(diffTemp[-1])*torch.randn((P,N))
-    x_recon = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=False,device= "cuda")
-    np.save(f"x_recon_L{L}/x_recon_L{L}_T{temp:.3f}_difftemp{diffTemp[-1]:.3f}",x_recon)
+    x_recon = backward(xT,A,g,diffTemp,nSteps,dt,full_traj=True,nslices= 9,device= "cuda")
+    np.save(f"x_recon_L{L}_traj/x_recon_L{L}_T{temp:.3f}_difftemp{diffTemp[-1]:.3f}",x_recon)
